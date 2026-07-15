@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        machine_id: [1, 2, 3, 4, ]
+        machine_id: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     
     steps:
       - name: 🔱 Checkout
@@ -35,3 +35,4 @@ jobs:
           TARGET_NAME: ${{ secrets.TARGET_NAME }}
           MACHINE_ID: ${{ matrix.machine_id }}
         run: python main.py
+        
