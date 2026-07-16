@@ -10,7 +10,7 @@ from playwright_stealth import Stealth
 
 # --- ⚙️ SHIELD PILLAR SETTINGS ---
 TABS_PER_MACHINE = 2    
-PULSE_DELAY = 120       # Steady injection speed
+PULSE_DELAY = 50      # Steady injection speed
 sys.stdout.reconfigure(encoding='utf-8')
 
 # --- 🎬 MANDATORY HUMAN BEHAVIOR (1 MINUTE BURST) ---
