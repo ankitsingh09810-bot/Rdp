@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+          # -*- coding: utf-8 -*-
 import asyncio
 import os
 import re
@@ -8,51 +8,48 @@ import time
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 
-# --- ⚙️ BOLD PILLAR SETTINGS ---
+# --- ⚙️ SHIELD PILLAR SETTINGS ---
 TABS_PER_MACHINE = 2    
-PULSE_DELAY = 100       
-CYCLE_DURATION = 60     
-SESSION_MAX_SEC = 21000 
+PULSE_DELAY = 120       # Steady injection speed
 sys.stdout.reconfigure(encoding='utf-8')
 
-# --- 🎬 AUXILIARY HUMAN BEHAVIOR FLOW (REELS) ---
-async def fast_human_behavior_reels(context, machine_id):
+# --- 🎬 MANDATORY HUMAN BEHAVIOR (1 MINUTE BURST) ---
+async def exact_one_minute_human_behavior(context, machine_id):
     """
-    Ek naya temporary tab open karke quick reels simulation run karta hai
-    taaki primary task tab disturb na ho.
+    Spam loop complete hone ke baad exact 60 seconds tak continuous
+    reels simulation chala kar account trust score ko stabilize karta hai.
     """
-    print(f"🎬 [Machine {machine_id}] Starting Quick Reels Simulation (Max ~20 Seconds)...")
+    print(f"🎬 [Machine {machine_id}] Target Reached! Launching Mandatory 1-Minute Human Behavior...")
     try:
         reels_page = await context.new_page()
-        # Media abort karna taaki load fast ho aur resources save hon
-        await reels_page.route("**/*.{png,jpg,jpeg,gif,webp,svg,mp4,woff,woff2,ttf}", lambda route: route.abort())
+        # Custom route handlers load network weight badhane ke liye (Bypasses patterns)
+        await reels_page.goto("https://www.instagram.com/reels/", wait_until="load", timeout=25000)
         
-        await reels_page.goto("https://www.instagram.com/reels/", wait_until="commit", timeout=15000)
-        await reels_page.wait_for_timeout(random.uniform(1500, 2500))
+        start_time = time.time()
+        current_reel = 1
         
-        total_reels = 15
-        reels_to_like = random.randint(2, 4)
-        like_indices = random.sample(range(1, total_reels + 1), reels_to_like)
-        
-        for current_reel in range(1, total_reels + 1):
-            if current_reel in like_indices:
-                await reels_page.wait_for_timeout(random.uniform(1500, 2500))
+        # Loop exact 60 seconds tak chalega
+        while time.time() - start_time < 60:
+            # Real viewing delay per reel (2 to 5 seconds stay duration)
+            await reels_page.wait_for_timeout(random.uniform(2000, 5000))
+            
+            # Random dynamic engagement (Like system)
+            if random.random() < 0.4:
                 try:
                     await reels_page.mouse.dblclick(x=200, y=150)
-                    print(f"❤️ [Machine {machine_id}] | Reel {current_reel}: Liked.")
+                    print(f"❤️ [Machine {machine_id}] | Verification Reel {current_reel}: Liked.")
                 except:
                     pass
-                await reels_page.wait_for_timeout(random.uniform(500, 1000))
-            else:
                 await reels_page.wait_for_timeout(random.uniform(500, 1200))
             
+            # Action event simulation for next reel
             await reels_page.keyboard.press("ArrowDown")
-            await reels_page.wait_for_timeout(random.uniform(300, 600))
+            current_reel += 1
             
         await reels_page.close()
-        print(f"✅ [Machine {machine_id}] Reels Simulation Done. Temporary tab closed.")
+        print(f"✅ [Machine {machine_id}] Trust Score Balanced. Returning to primary sequence.")
     except Exception as e:
-        print(f"⚠️ [Machine {machine_id}] Reels Simulation bypassed due to context constraint.")
+        print(f"⚠️ [Machine {machine_id}] Shield behavior bypassed due to page timeout.")
 
 # --- 🔱 MAIN EXECUTION ENGINE ---
 async def run_strike(node_id, cookie, target_id, target_name):
@@ -68,15 +65,11 @@ async def run_strike(node_id, cookie, target_id, target_name):
             args=[
                 "--disable-dev-shm-usage",
                 "--no-sandbox",
-                "--disable-gpu",
-                "--disable-background-timer-throttling",
-                "--disable-threaded-scrolling"
+                "--disable-gpu"
             ]
         )
 
-        # Stealth apply karna modern API standards ke hisab se
-        stealth = Stealth()
-        await stealth.apply_stealth_async(context)
+        await Stealth().apply_stealth_async(context)
 
         sid = re.search(r'sessionid=([^;]+)', cookie).group(1) if 'sessionid=' in cookie else cookie
         await context.add_cookies([{
@@ -84,9 +77,10 @@ async def run_strike(node_id, cookie, target_id, target_name):
             'domain': '.instagram.com', 'path': '/', 'secure': True, 'httpOnly': True
         }])
 
-        # ⚡ OPTIMIZED GROUP CHAT INJECTION SCRIPT (DYNAMIC FALLBACKS)
+        # ⚡ TARGET COUNTER INJECTION SCRIPT
+        # Yeh script exact targets meet hone par automatic pulse engine ko break kar deti hai
         strike_script = """
-            (name, delay) => {
+            (name, delay, maxSpam) => {
                 const getBlock = () => {
                     const emojis = ["💙", "❤️", "💚", "💛", "💜", "🖤", "🤍", "🤎", "🧡", "💖"];
                     const currentEmoji = emojis[Math.floor(Math.random() * emojis.length)];
@@ -99,8 +93,14 @@ async def run_strike(node_id, cookie, target_id, target_name):
                     return text;
                 }
 
+                window.currentSpamCount = 0;
                 const pulse = () => {
-                    // Group Chat targeted dynamic selectors
+                    // Agar limit crash ho jaye, to control loop ko stop kar do
+                    if (window.currentSpamCount >= maxSpam) {
+                        console.log("LIMIT_REACHED");
+                        return;
+                    }
+
                     const box = document.querySelector('div[role="textbox"]') || 
                                 document.querySelector('[contenteditable="true"]') ||
                                 document.querySelector('textarea');
@@ -128,53 +128,68 @@ async def run_strike(node_id, cookie, target_id, target_name):
                             
                             if (!sendBtn) {
                                 sendBtn = document.querySelector('div[aria-label="Send"]') || 
-                                          document.querySelector('form button[type="button"]') ||
-                                          document.querySelector('div[role="textbox"] ~ div[role="button"]');
+                                          document.querySelector('form button[type="button"]');
                             }
                             
                             if (sendBtn) {
                                 sendBtn.click();
+                                window.currentSpamCount++;
                             }
                         }, 200);
                     }
-                    setTimeout(() => { requestAnimationFrame(pulse); }, delay);
+                    setTimeout(() => { pulse(); }, delay);
                 }
                 pulse();
             }
         """
 
-        elapsed = 0
-        last_reels_time = time.time()
-        next_reels_interval = random.randint(300, 600)
-
-        while elapsed < SESSION_MAX_SEC:
+        # Purana complex timers hata kar direct session execution loop lagaya hai
+        session_running = True
+        while session_running:
             pages = []
-            
-            # --- INTERACTION STATE CHECK (REELS ENGINE TRIGGER) ---
-            current_time = time.time()
-            if current_time - last_reels_time >= next_reels_interval:
-                await fast_human_behavior_reels(context, node_id)
-                last_reels_time = time.time()
-                next_reels_interval = random.randint(300, 600)
-            
-            # --- MAIN FLOODING TASK ---
+            # Har machine ke liye 300 se 500 ke beech ek custom burst target select hoga
+            target_spam_limit = random.randint(300, 500)
+            print(f"🚀 [Machine {node_id}] Initiating Burst Phase. Target: {target_spam_limit} Messages.")
+
             for i in range(TABS_PER_MACHINE):
                 pg = await context.new_page()
-                await pg.route("**/*.{png,jpg,jpeg,gif,webp,svg,mp4,woff,woff2,ttf}", lambda route: route.abort())
                 try:
-                    # Dynamic Target Thread ID from GitHub Secrets
                     await pg.goto(f"https://www.instagram.com/direct/t/{target_id}/", wait_until="commit", timeout=15000)
-                    await pg.wait_for_timeout(3000) # Chat window loading buffer
-                    await pg.evaluate(strike_script, [target_name, PULSE_DELAY])
+                    await pg.wait_for_timeout(3000)
+                    # Window context target value dynamically inject karna
+                    await pg.evaluate(strike_script, [target_name, PULSE_DELAY, target_spam_limit])
                     pages.append(pg)
                 except: 
                     pass
+
+            # Monitor Loop: Jab tak target hits nahi hote tab tak pages ko open rakhna
+            reached = False
+            start_monitor = time.time()
             
-            await asyncio.sleep(CYCLE_DURATION)
+            while not reached:
+                await asyncio.sleep(5)
+                # Max duration protection (10 minutes max execution safety)
+                if time.time() - start_monitor > 600:
+                    break
+                    
+                for pg in pages:
+                    try:
+                        # Console frame ya direct state evaluation se checks verification karna
+                        count = await pg.evaluate("window.currentSpamCount")
+                        if count and count >= target_spam_limit:
+                            reached = True
+                            break
+                    except:
+                        pass
+            
+            # Primary spam windows close karna taaki pure cooldown environment setup ho sake
             for pg in pages: 
                 try: await pg.close()
                 except: pass
-            elapsed += CYCLE_DURATION
+            
+            # --- 🛡️ SHIELD TRIGGER PHASE ---
+            # Jaise hi text block count limit match hoga, 1-minute solid human session execute hoga
+            await exact_one_minute_human_behavior(context, node_id)
 
         await context.close()
 
