@@ -250,7 +250,7 @@ async def run_strike(thread_idx, cookie, target_id, target_name, machine_id):
                 role = get_current_role(thread_idx)
                 
                 if role == "FAST":
-                    pulse_delay = 50  
+                    pulse_delay = 20
                     target_spam_limit = random.randint(300, 500)
                     
                     send_telegram_alert(f"🚀 *[Machine {machine_id}] ID {thread_idx}* started FAST Injection mode. Capture engine recording automatically.")
