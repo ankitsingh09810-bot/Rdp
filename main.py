@@ -1,4 +1,4 @@
-          # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import asyncio
 import os
 import re
@@ -7,55 +7,97 @@ import sys
 import time
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
+from pyvirtualdisplay import Display
 
 # --- ⚙️ SHIELD PILLAR SETTINGS ---
 TABS_PER_MACHINE = 2    
-PULSE_DELAY = 50      # Steady injection speed
 sys.stdout.reconfigure(encoding='utf-8')
 
-# --- 🎬 MANDATORY HUMAN BEHAVIOR (1 MINUTE BURST) ---
-async def exact_one_minute_human_behavior(context, machine_id):
+# Script start time to calculate hours for swapping roles
+START_TIME = time.time()
+
+def get_current_role(thread_idx):
     """
-    Spam loop complete hone ke baad exact 60 seconds tak continuous
-    reels simulation chala kar account trust score ko stabilize karta hai.
+    Har 1 ghante (3600 seconds) baad roles switch honge.
+    Thread 1 pehle ghante FAST chalega, Thread 2 strictly SLOW (Human Behavior Cooldown).
+    Dusre ghante roles swap ho jayenge.
     """
-    print(f"🎬 [Machine {machine_id}] Target Reached! Launching Mandatory 1-Minute Human Behavior...")
+    elapsed_hours = int((time.time() - START_TIME) // 3600)
+    if elapsed_hours % 2 == 0:
+        return "FAST" if thread_idx == 1 else "SLOW"
+    else:
+        return "SLOW" if thread_idx == 1 else "FAST"
+
+# --- 🎬 CONTINUOUS HUMAN BEHAVIOR FOR COOLDOWN ID ---
+async def run_continuous_human_behavior(context, machine_id, thread_idx, run_duration_seconds):
+    """
+    Jab ID SLOW/COOLDOWN mode me hogi, toh yeh function run hoga.
+    Yeh specify kiye gaye duration tak non-stop Instagram Reels dekhega, scroll karega aur likes karega.
+    """
+    print(f"🎬 [ID {thread_idx} | M {machine_id}] Active Role: SLOW Cooldown. Running Continuous Human Behavior...")
     try:
         reels_page = await context.new_page()
-        # Custom route handlers load network weight badhane ke liye (Bypasses patterns)
         await reels_page.goto("https://www.instagram.com/reels/", wait_until="load", timeout=25000)
         
         start_time = time.time()
         current_reel = 1
         
-        # Loop exact 60 seconds tak chalega
-        while time.time() - start_time < 60:
-            # Real viewing delay per reel (2 to 5 seconds stay duration)
-            await reels_page.wait_for_timeout(random.uniform(2000, 5000))
+        while time.time() - start_time < run_duration_seconds:
+            # Real viewing delay per reel (3 to 6 seconds stay duration)
+            await reels_page.wait_for_timeout(random.uniform(3000, 6000))
             
-            # Random dynamic engagement (Like system)
-            if random.random() < 0.4:
+            # 45% chance to like the reel
+            if random.random() < 0.45:
                 try:
                     await reels_page.mouse.dblclick(x=200, y=150)
-                    print(f"❤️ [Machine {machine_id}] | Verification Reel {current_reel}: Liked.")
+                    print(f"❤️ [ID {thread_idx} | M {machine_id}] | Cooldown Reel {current_reel}: Liked.")
                 except:
                     pass
-                await reels_page.wait_for_timeout(random.uniform(500, 1200))
+                await reels_page.wait_for_timeout(random.uniform(600, 1500))
             
-            # Action event simulation for next reel
+            # Scroll down to next reel
             await reels_page.keyboard.press("ArrowDown")
             current_reel += 1
             
         await reels_page.close()
-        print(f"✅ [Machine {machine_id}] Trust Score Balanced. Returning to primary sequence.")
+        print(f"✅ [ID {thread_idx} | M {machine_id}] Cooldown Human Session Complete.")
     except Exception as e:
-        print(f"⚠️ [Machine {machine_id}] Shield behavior bypassed due to page timeout.")
+        print(f"⚠️ [ID {thread_idx} | M {machine_id}] Human behavior session ran into a minor issue: {e}")
+
+# --- 🎬 SHORT COOLDOWN AFTER SPAM ---
+async def exact_one_minute_human_behavior(context, machine_id, thread_idx):
+    """
+    Spam loop complete hone ke baad exact 60 seconds tak continuous reels dekhega.
+    """
+    print(f"🎬 [ID {thread_idx} | M {machine_id}] Cycle Target Reached! Launching Mandatory 1-Minute Cooldown...")
+    try:
+        reels_page = await context.new_page()
+        await reels_page.goto("https://www.instagram.com/reels/", wait_until="load", timeout=25000)
+        
+        start_time = time.time()
+        current_reel = 1
+        
+        while time.time() - start_time < 60:
+            await reels_page.wait_for_timeout(random.uniform(2000, 5000))
+            if random.random() < 0.4:
+                try:
+                    await reels_page.mouse.dblclick(x=200, y=150)
+                except:
+                    pass
+                await reels_page.wait_for_timeout(random.uniform(500, 1200))
+            await reels_page.keyboard.press("ArrowDown")
+            current_reel += 1
+            
+        await reels_page.close()
+        print(f"✅ [ID {thread_idx} | M {machine_id}] 1-Min Buffer Complete.")
+    except Exception as e:
+        print(f"⚠️ [ID {thread_idx} | M {machine_id}] Cooldown bypassed: {e}")
 
 # --- 🔱 MAIN EXECUTION ENGINE ---
-async def run_strike(node_id, cookie, target_id, target_name):
+async def run_strike(thread_idx, cookie, target_id, target_name, machine_id):
     async with async_playwright() as p:
         user_agent = "Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1"
-        profile_path = os.path.join(os.getcwd(), f"n_{node_id}")
+        profile_path = os.path.join(os.getcwd(), f"n_{thread_idx}_{machine_id}")
         
         context = await p.chromium.launch_persistent_context(
             user_data_dir=profile_path,
@@ -65,7 +107,8 @@ async def run_strike(node_id, cookie, target_id, target_name):
             args=[
                 "--disable-dev-shm-usage",
                 "--no-sandbox",
-                "--disable-gpu"
+                "--disable-gpu",
+                "--blink-settings=imagesEnabled=false"
             ]
         )
 
@@ -77,8 +120,7 @@ async def run_strike(node_id, cookie, target_id, target_name):
             'domain': '.instagram.com', 'path': '/', 'secure': True, 'httpOnly': True
         }])
 
-        # ⚡ TARGET COUNTER INJECTION SCRIPT
-        # Yeh script exact targets meet hone par automatic pulse engine ko break kar deti hai
+        # ⚡ HIGH-SPEED TARGET COUNTER INJECTION SCRIPT (Optimized to 50ms)
         strike_script = """
             (name, delay, maxSpam) => {
                 const getBlock = () => {
@@ -95,7 +137,6 @@ async def run_strike(node_id, cookie, target_id, target_name):
 
                 window.currentSpamCount = 0;
                 const pulse = () => {
-                    // Agar limit crash ho jaye, to control loop ko stop kar do
                     if (window.currentSpamCount >= maxSpam) {
                         console.log("LIMIT_REACHED");
                         return;
@@ -135,7 +176,7 @@ async def run_strike(node_id, cookie, target_id, target_name):
                                 sendBtn.click();
                                 window.currentSpamCount++;
                             }
-                        }, 200);
+                        }, 10); // Super fast 10ms click trigger after pasting
                     }
                     setTimeout(() => { pulse(); }, delay);
                 }
@@ -143,64 +184,88 @@ async def run_strike(node_id, cookie, target_id, target_name):
             }
         """
 
-        # Purana complex timers hata kar direct session execution loop lagaya hai
-        session_running = True
-        while session_running:
-            pages = []
-            # Har machine ke liye 300 se 500 ke beech ek custom burst target select hoga
-            target_spam_limit = random.randint(300, 500)
-            print(f"🚀 [Machine {node_id}] Initiating Burst Phase. Target: {target_spam_limit} Messages.")
+        while True:
+            try:
+                role = get_current_role(thread_idx)
+                
+                if role == "FAST":
+                    pulse_delay = 50  # Upgraded: Exact 50ms fast delay
+                    target_spam_limit = random.randint(300, 500)
+                    print(f"🚀 [ID {thread_idx} | M {machine_id}] Mode: FAST (Spam) | Target: {target_spam_limit} Msgs | Delay: {pulse_delay}ms.")
 
-            for i in range(TABS_PER_MACHINE):
-                pg = await context.new_page()
-                try:
-                    await pg.goto(f"https://www.instagram.com/direct/t/{target_id}/", wait_until="commit", timeout=15000)
-                    await pg.wait_for_timeout(3000)
-                    # Window context target value dynamically inject karna
-                    await pg.evaluate(strike_script, [target_name, PULSE_DELAY, target_spam_limit])
-                    pages.append(pg)
-                except: 
-                    pass
+                    pages = []
+                    for i in range(TABS_PER_MACHINE):
+                        pg = await context.new_page()
+                        try:
+                            await pg.goto(f"https://www.instagram.com/direct/t/{target_id}/", wait_until="commit", timeout=20000)
+                            await pg.wait_for_timeout(3000)
+                            await pg.evaluate(strike_script, [target_name, pulse_delay, target_spam_limit])
+                            pages.append(pg)
+                        except Exception as e:
+                            print(f"⚠️ [ID {thread_idx}] Tab load warning: {e}")
 
-            # Monitor Loop: Jab tak target hits nahi hote tab tak pages ko open rakhna
-            reached = False
-            start_monitor = time.time()
-            
-            while not reached:
-                await asyncio.sleep(5)
-                # Max duration protection (10 minutes max execution safety)
-                if time.time() - start_monitor > 600:
-                    break
+                    # Monitor Loop
+                    reached = False
+                    start_monitor = time.time()
+                    while not reached and (time.time() - start_monitor < 900):
+                        await asyncio.sleep(5)
+                        for pg in pages:
+                            try:
+                                count = await pg.evaluate("window.currentSpamCount")
+                                if count and count >= target_spam_limit:
+                                    reached = True
+                                    break
+                            except:
+                                pass
                     
-                for pg in pages:
-                    try:
-                        # Console frame ya direct state evaluation se checks verification karna
-                        count = await pg.evaluate("window.currentSpamCount")
-                        if count and count >= target_spam_limit:
-                            reached = True
-                            break
-                    except:
-                        pass
-            
-            # Primary spam windows close karna taaki pure cooldown environment setup ho sake
-            for pg in pages: 
-                try: await pg.close()
-                except: pass
-            
-            # --- 🛡️ SHIELD TRIGGER PHASE ---
-            # Jaise hi text block count limit match hoga, 1-minute solid human session execute hoga
-            await exact_one_minute_human_behavior(context, node_id)
+                    # Clean up active spam tabs
+                    for pg in pages: 
+                        try: await pg.close()
+                        except: pass
+                    
+                    # Short Cooldown after spam run
+                    await exact_one_minute_human_behavior(context, machine_id, thread_idx)
+                    
+                    cycle_rest = random.randint(10, 25)
+                    print(f"💤 [ID {thread_idx}] Fast cycle done. Resting for {cycle_rest}s...")
+                    await asyncio.sleep(cycle_rest)
+
+                else:
+                    # STRICT SLOW MODE: Runs pure human behavior on Reels
+                    # Randomly executes reels viewing sessions of 3 to 6 minutes duration
+                    cooldown_session_duration = random.randint(180, 360) 
+                    await run_continuous_human_behavior(context, machine_id, thread_idx, cooldown_session_duration)
+                    
+                    # Rest between human sessions
+                    post_cooldown_rest = random.randint(60, 120)
+                    print(f"💤 [ID {thread_idx}] Cooldown session done. Rest for {post_cooldown_rest}s...")
+                    await asyncio.sleep(post_cooldown_rest)
+
+            except Exception as e:
+                print(f"⚠️ [ID {thread_idx} | M {machine_id}] Session Warning: {e}. Re-syncing in 15s...")
+                await asyncio.sleep(15)
 
         await context.close()
 
 async def main():
-    cookie = os.environ.get("INSTA_COOKIE")
+    cookie1 = os.environ.get("INSTA_COOKIE_1")
+    cookie2 = os.environ.get("INSTA_COOKIE_2")
     target_id = os.environ.get("TARGET_THREAD_ID")
     target_name = os.environ.get("TARGET_NAME", "TARGET")
     m_id = os.environ.get("MACHINE_ID", "1")
-    if cookie and target_id:
-        await run_strike(m_id, cookie, target_id, target_name)
+    
+    display = Display(visible=0, size=(1024, 768))
+    display.start()
+    
+    try:
+        if cookie1 and cookie2 and target_id:
+            await asyncio.gather(
+                run_strike(1, cookie1, target_id, target_name, m_id),   # ID 1
+                run_strike(2, cookie2, target_id, target_name, m_id)    # ID 2
+            )
+    finally:
+        display.stop()
 
 if __name__ == "__main__":
     asyncio.run(main())
-        
+          
