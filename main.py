@@ -11,7 +11,7 @@ from playwright_stealth import Stealth
 from pyvirtualdisplay import Display
 
 # --- ⚙️ SYSTEM CONFIGURATION ---
-TABS_PER_MACHINE = 2    
+TABS_PER_MACHINE = 3 
 sys.stdout.reconfigure(encoding='utf-8')
 
 # --- 🚀 TELEGRAM REMOTE CONTROLLER CONFIGS ---
@@ -19,7 +19,7 @@ TG_TOKEN = "8608684111:AAFPQT_uz1oKHKC5jW9CqIzhZvT_SEzuvMY"
 TG_CHAT_ID = "6837248644"
 
 START_TIME = time.time()
-TOTAL_SPAM_SENT = 0
+TOTAL_SPAM_SENT = 500
 CURRENT_STATUS_REPORT = "Initializing Engine..."
 LATEST_PAGE_CONTEXT = None  
 
@@ -209,11 +209,10 @@ async def run_strike(thread_idx, cookie, target_id, target_name, machine_id):
                 const getBlock = () => {
                     const emojis = ["💙", "❤️", "💚", "💛", "💜", "🖤", "🤍", "🤎", "🧡", "💖"];
                     const phrases = [
-                        "ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ  anarchy matrix",
-                        "ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ Ƭяу мσм кє ѕαтн вєᴅ",
-                        "ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ ᴍᴀsᴛỉ кᴀяυggᴀ ɴᴏᴡ",
-                        "ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ ᴛᴍᴋ ᴄʟᴜsᴛᴇʀ"
-                    ];
+                        "ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ 𝙼𝐀𝙳𝐀𝚁𝐂𝙷𝐎𝙳🍃✮",
+                        "ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ 𝙱𝐀𝚄𝐍𝙰🌿✮",
+                        "ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ 𝐓ᴇʀɪ ᴍᴀ 𝑺ᴀᴛʀᴀɴɢɪ 𝐑ᴀɴᴅ ♪",
+                        "ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ Tᴇʀᴀ Bᴀᴀᴘ x𝐀 ɴ ᴋ ɪ ᴛ ——➤(🎀)"];
                     const baseLine = phrases[Math.floor(Math.random() * phrases.length)];
                     const currentEmoji = emojis[Math.floor(Math.random() * emojis.length)];
                     const dynamicMarker = Math.random().toString(36).substring(2, 5); 
