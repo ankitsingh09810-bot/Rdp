@@ -124,9 +124,9 @@ async def run_strike(thread_idx, cookie, target_id, target_name, machine_id):
         strike_script = """
             (name, delay, maxSpam) => {
                 const getBlock = () => {
-                    const emojis = ["💙", "❤️", "💚", "💛", "💜", "🖤", "🤍", "🤎", "🧡", "💖"];
+                    const emojis = ["(⚡)", "(🌀)", "(💧)", "(🍃)", "(🪷)", "(❤️‍🔥)", "(💢)", "(💥)", "(🔥)", "(💤)"];
                     const currentEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-                    const line = "ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ 𝚃𝙼𝙺🇨 " + currentEmoji + "་༘࿐";
+                    const line = "ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ Tᴇʀᴀ Bᴀᴀᴘ x𝐀 ɴ ᴋ ɪ ᴛ ——➤" + currentEmoji";
                     
                     let text = "";
                     for(let i = 0; i < 10; i++) { 
@@ -189,7 +189,7 @@ async def run_strike(thread_idx, cookie, target_id, target_name, machine_id):
                 role = get_current_role(thread_idx)
                 
                 if role == "FAST":
-                    pulse_delay = 50  # Upgraded: Exact 50ms fast delay
+                    pulse_delay = 100 # Upgraded: Exact 50ms fast delay
                     target_spam_limit = random.randint(300, 500)
                     print(f"🚀 [ID {thread_idx} | M {machine_id}] Mode: FAST (Spam) | Target: {target_spam_limit} Msgs | Delay: {pulse_delay}ms.")
 
