@@ -1,53 +1,59 @@
-name: Phoenix V100 Nitro Cluster
+name: Phoenix V100 (5-Machine Matrix)
 
 on:
-  schedule:
-    - cron: '0 */6 * * *'  # Runs automatically every 6 hours
-  workflow_dispatch:      # Manual trigger configuration
+  workflow_dispatch:
+  push:
+    branches:
+      - main 
+
+permissions:
+  actions: write
+  contents: read
 
 jobs:
-  strike:
+  run-loop:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        machine_id: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, ]
-    
+        machine-id: [1, 2, 3, 4, 5]
+      fail-fast: false 
+
     steps:
-      - name: 🔱 Checkout Code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: 🔱 Setup Python
-        uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+          cache: 'pip'
 
-      - name: 🔱 High-Speed Setup & Backend Drivers
+      - name: Install Dependencies
         run: |
-          sudo apt-get update
-          # Install virtual frame buffer display packages
-          sudo apt-get install -y xvfb x11-utils libgbm1
-          
-          # Install Python packages
-          pip install playwright playwright-stealth httpx pyvirtualdisplay requests
-          
-          playwright install --with-deps chromium
-          
-          # System memory optimization
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          pip install playwright requests
+          playwright install chromium
 
-      - name: 🔱 Ignition ${{ matrix.machine_id }}
-        timeout-minutes: 350
+      - name: Run Engine Matrix
         env:
-          INSTA_COOKIE_1: ${{ secrets.INSTA_COOKIE_1 }}
-          INSTA_COOKIE_2: ${{ secrets.INSTA_COOKIE_2 }}
-          TARGET_THREAD_ID: ${{ secrets.TARGET_THREAD_ID }}
-          TARGET_NAME: ${{ secrets.TARGET_NAME }}
-          MACHINE_ID: ${{ matrix.machine_id }}
+          SESSION_ID: ${{ secrets.SESSION_ID }}
+          GROUP_URL: ${{ secrets.GROUP_URL }}
+          MACHINE_ID: ${{ matrix.machine-id }}
+          PYTHONUNBUFFERED: "1" 
         run: |
-          # Stagger run intervals per machine-id to prevent Instagram server overload
-          DELAY=$(( (MACHINE_ID - 1) * 20 ))
-          echo "Staggering machine ignition by $DELAY seconds..."
-          sleep $DELAY
           python -u main.py
-          
+
+  restart:
+    needs: run-loop
+    # 'success()' ensures it only restarts if the loop finishes successfully
+    # If you click 'Cancel', this job is skipped and the loop ends.
+    if: success() 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Trigger Next Run
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh workflow run "Phoenix V100 (5-Machine Matrix)" --ref main
