@@ -1,271 +1,137 @@
-# -*- coding: utf-8 -*-
 import asyncio
 import os
-import re
 import random
 import sys
+import shutil
 import time
+import requests
+import uuid
 from playwright.async_api import async_playwright
-from playwright_stealth import Stealth
-from pyvirtualdisplay import Display
 
-# --- ⚙️ SHIELD PILLAR SETTINGS ---
-TABS_PER_MACHINE = 2    
-sys.stdout.reconfigure(encoding='utf-8')
-
-# Script start time to calculate hours for swapping roles
 START_TIME = time.time()
+SIGNATURE = "༺ρ 𝕣 ꪜ 𝕣 अब्बू ☽༻"
+SIGNATURE_CHANCE = 0.15 
 
-def get_current_role(thread_idx):
-    """
-    Har 1 ghante (3600 seconds) baad roles switch honge.
-    Thread 1 pehle ghante FAST chalega, Thread 2 strictly SLOW (Human Behavior Cooldown).
-    Dusre ghante roles swap ho jayenge.
-    """
-    elapsed_hours = int((time.time() - START_TIME) // 3600)
-    if elapsed_hours % 2 == 0:
-        return "FAST" if thread_idx == 1 else "SLOW"
+def get_payload():
+    base_text = "ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ ᴛʀʏ. ᴍᴀ ғʟᴏᴡᴇʀ."
+    fire_part = "ʏᴀ ғɪʀᴇ 🔥??"
+    flowers = ["🌸", "🌹", "🌺", "🌻", "🌼", "🌷"]
+    line = f"{base_text} {random.choice(flowers)} {fire_part}"
+    return ("\n" * 30).join([line] * 3)
+
+async def block_media(route):
+    if route.request.resource_type in ["image", "media", "font"]:
+        await route.abort()
     else:
-        return "SLOW" if thread_idx == 1 else "FAST"
+        await route.continue_()
 
-# --- 🎬 CONTINUOUS HUMAN BEHAVIOR FOR COOLDOWN ID ---
-async def run_continuous_human_behavior(context, machine_id, thread_idx, run_duration_seconds):
-    """
-    Jab ID SLOW/COOLDOWN mode me hogi, toh yeh function run hoga.
-    Yeh specify kiye gaye duration tak non-stop Instagram Reels dekhega, scroll karega aur likes karega.
-    """
-    print(f"🎬 [ID {thread_idx} | M {machine_id}] Active Role: SLOW Cooldown. Running Continuous Human Behavior...")
-    try:
-        reels_page = await context.new_page()
-        await reels_page.goto("https://www.instagram.com/reels/", wait_until="load", timeout=25000)
-        
-        start_time = time.time()
-        current_reel = 1
-        
-        while time.time() - start_time < run_duration_seconds:
-            # Real viewing delay per reel (3 to 6 seconds stay duration)
-            await reels_page.wait_for_timeout(random.uniform(3000, 6000))
+# --- 🛡️ API NAME GUARDIAN ---
+async def run_name_guardian(sid, tid, sig):
+    print("🛡️ [GUARDIAN] Initializing API Name Guardian...", flush=True)
+    session = requests.Session()
+    session.headers.update({
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36", 
+        "X-IG-App-ID": "936619743392459"
+    })
+    session.cookies.set("sessionid", sid, domain=".instagram.com")
+    
+    while True:
+        try:
+            # Randomized delay: 300 to 600 seconds (5 to 10 minutes)
+            wait_time = random.uniform(300, 600)
+            print(f"⏳ [GUARDIAN] Sleeping for {wait_time:.1f}s before next check...", flush=True)
+            await asyncio.sleep(wait_time)
             
-            # 45% chance to like the reel
-            if random.random() < 0.45:
-                try:
-                    await reels_page.mouse.dblclick(x=200, y=150)
-                    print(f"❤️ [ID {thread_idx} | M {machine_id}] | Cooldown Reel {current_reel}: Liked.")
-                except:
-                    pass
-                await reels_page.wait_for_timeout(random.uniform(600, 1500))
-            
-            # Scroll down to next reel
-            await reels_page.keyboard.press("ArrowDown")
-            current_reel += 1
-            
-        await reels_page.close()
-        print(f"✅ [ID {thread_idx} | M {machine_id}] Cooldown Human Session Complete.")
-    except Exception as e:
-        print(f"⚠️ [ID {thread_idx} | M {machine_id}] Human behavior session ran into a minor issue: {e}")
-
-# --- 🎬 SHORT COOLDOWN AFTER SPAM ---
-async def exact_one_minute_human_behavior(context, machine_id, thread_idx):
-    """
-    Spam loop complete hone ke baad exact 60 seconds tak continuous reels dekhega.
-    """
-    print(f"🎬 [ID {thread_idx} | M {machine_id}] Cycle Target Reached! Launching Mandatory 1-Minute Cooldown...")
-    try:
-        reels_page = await context.new_page()
-        await reels_page.goto("https://www.instagram.com/reels/", wait_until="load", timeout=25000)
-        
-        start_time = time.time()
-        current_reel = 1
-        
-        while time.time() - start_time < 60:
-            await reels_page.wait_for_timeout(random.uniform(2000, 5000))
-            if random.random() < 0.4:
-                try:
-                    await reels_page.mouse.dblclick(x=200, y=150)
-                except:
-                    pass
-                await reels_page.wait_for_timeout(random.uniform(500, 1200))
-            await reels_page.keyboard.press("ArrowDown")
-            current_reel += 1
-            
-        await reels_page.close()
-        print(f"✅ [ID {thread_idx} | M {machine_id}] 1-Min Buffer Complete.")
-    except Exception as e:
-        print(f"⚠️ [ID {thread_idx} | M {machine_id}] Cooldown bypassed: {e}")
-
-# --- 🔱 MAIN EXECUTION ENGINE ---
-async def run_strike(thread_idx, cookie, target_id, target_name, machine_id):
-    async with async_playwright() as p:
-        user_agent = "Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1"
-        profile_path = os.path.join(os.getcwd(), f"n_{thread_idx}_{machine_id}")
-        
-        context = await p.chromium.launch_persistent_context(
-            user_data_dir=profile_path,
-            headless=True,
-            user_agent=user_agent,
-            viewport={'width': 400, 'height': 300},
-            args=[
-                "--disable-dev-shm-usage",
-                "--no-sandbox",
-                "--disable-gpu",
-                "--blink-settings=imagesEnabled=false"
-            ]
-        )
-
-        await Stealth().apply_stealth_async(context)
-
-        sid = re.search(r'sessionid=([^;]+)', cookie).group(1) if 'sessionid=' in cookie else cookie
-        await context.add_cookies([{
-            'name': 'sessionid', 'value': sid.strip(), 
-            'domain': '.instagram.com', 'path': '/', 'secure': True, 'httpOnly': True
-        }])
-
-        # ⚡ HIGH-SPEED TARGET COUNTER INJECTION SCRIPT (Optimized to 50ms)
-        strike_script = """
-            (name, delay, maxSpam) => {
-                const getBlock = () => {
-                    const emojis = ["(⚡)", "(🌀)", "(💧)", "(🍃)", "(🪷)", "(❤️‍🔥)", "(💢)", "(💥)", "(🔥)", "(💤)"];
-                    const currentEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-                    const line = "ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ Tᴇʀᴀ Bᴀᴀᴘ x𝐀 ɴ ᴋ ɪ ᴛ ——➤" + currentEmoji";
-                    
-                    let text = "";
-                    for(let i = 0; i < 10; i++) { 
-                        text += line + "\\n\\n\\n\\n"; 
-                    }
-                    return text;
-                }
-
-                window.currentSpamCount = 0;
-                const pulse = () => {
-                    if (window.currentSpamCount >= maxSpam) {
-                        console.log("LIMIT_REACHED");
-                        return;
-                    }
-
-                    const box = document.querySelector('div[role="textbox"]') || 
-                                document.querySelector('[contenteditable="true"]') ||
-                                document.querySelector('textarea');
-                                
-                    if (box) {
-                        const text = getBlock();
-                        const dataTransfer = new DataTransfer();
-                        dataTransfer.setData('text/plain', text);
-                        
-                        const pasteEvent = new ClipboardEvent('paste', {
-                            clipboardData: dataTransfer,
-                            bubbles: true,
-                            cancelable: true
-                        });
-                        
-                        box.focus();
-                        box.dispatchEvent(pasteEvent);
-                        box.dispatchEvent(new Event('input', { bubbles: true }));
-                        box.dispatchEvent(new Event('change', { bubbles: true }));
-                        
-                        setTimeout(() => {
-                            let sendBtn = Array.from(document.querySelectorAll('div[role="button"], button')).find(el => 
-                                el.textContent.trim() === 'Send' || el.innerText.trim() === 'Send'
-                            );
-                            
-                            if (!sendBtn) {
-                                sendBtn = document.querySelector('div[aria-label="Send"]') || 
-                                          document.querySelector('form button[type="button"]');
-                            }
-                            
-                            if (sendBtn) {
-                                sendBtn.click();
-                                window.currentSpamCount++;
-                            }
-                        }, 10); // Super fast 10ms click trigger after pasting
-                    }
-                    setTimeout(() => { pulse(); }, delay);
-                }
-                pulse();
-            }
-        """
-
-        while True:
-            try:
-                role = get_current_role(thread_idx)
-                
-                if role == "FAST":
-                    pulse_delay = 100 # Upgraded: Exact 50ms fast delay
-                    target_spam_limit = random.randint(300, 500)
-                    print(f"🚀 [ID {thread_idx} | M {machine_id}] Mode: FAST (Spam) | Target: {target_spam_limit} Msgs | Delay: {pulse_delay}ms.")
-
-                    pages = []
-                    for i in range(TABS_PER_MACHINE):
-                        pg = await context.new_page()
-                        try:
-                            await pg.goto(f"https://www.instagram.com/direct/t/{target_id}/", wait_until="commit", timeout=20000)
-                            await pg.wait_for_timeout(3000)
-                            await pg.evaluate(strike_script, [target_name, pulse_delay, target_spam_limit])
-                            pages.append(pg)
-                        except Exception as e:
-                            print(f"⚠️ [ID {thread_idx}] Tab load warning: {e}")
-
-                    # Monitor Loop
-                    reached = False
-                    start_monitor = time.time()
-                    while not reached and (time.time() - start_monitor < 900):
-                        await asyncio.sleep(5)
-                        for pg in pages:
-                            try:
-                                count = await pg.evaluate("window.currentSpamCount")
-                                if count and count >= target_spam_limit:
-                                    reached = True
-                                    break
-                            except:
-                                pass
-                    
-                    # Clean up active spam tabs
-                    for pg in pages: 
-                        try: await pg.close()
-                        except: pass
-                    
-                    # Short Cooldown after spam run
-                    await exact_one_minute_human_behavior(context, machine_id, thread_idx)
-                    
-                    cycle_rest = random.randint(10, 25)
-                    print(f"💤 [ID {thread_idx}] Fast cycle done. Resting for {cycle_rest}s...")
-                    await asyncio.sleep(cycle_rest)
-
+            resp = session.get(f"https://www.instagram.com/api/v1/direct_v2/threads/{tid}/")
+            if resp.status_code == 200:
+                current_title = resp.json().get("thread", {}).get("thread_title")
+                if current_title != sig:
+                    print(f"🚨 [GUARDIAN] BREACH DETECTED! Name changed to '{current_title}'. Re-securing...", flush=True)
+                    csrf = session.cookies.get("csrftoken", "")
+                    session.post(
+                        f"https://www.instagram.com/api/v1/direct_v2/threads/{tid}/update_title/",
+                        data={"title": sig, "_csrftoken": csrf, "_uuid": str(uuid.uuid4())},
+                        headers={"X-CSRFToken": csrf}
+                    )
+                    print("🔒 [GUARDIAN] Name successfully secured.", flush=True)
                 else:
-                    # STRICT SLOW MODE: Runs pure human behavior on Reels
-                    # Randomly executes reels viewing sessions of 3 to 6 minutes duration
-                    cooldown_session_duration = random.randint(180, 360) 
-                    await run_continuous_human_behavior(context, machine_id, thread_idx, cooldown_session_duration)
+                    print("🛡️ [GUARDIAN] Thread name is secure.", flush=True)
+        except Exception as e: 
+            print(f"⚠️ [GUARDIAN] Error checking name: {e}", flush=True)
+
+# --- 🔥 STRIKE ENGINE ---
+async def run_engine(engine_id, sid, url):
+    user_data_dir = f"./session_data_{engine_id}"
+    print(f"💥 [Engine {engine_id}] Waking up. Preparing to breach target...", flush=True)
+    
+    while True:
+        if time.time() - START_TIME > 18000:
+            print(f"⏰ [Engine {engine_id}] 5-hour limit reached. Evacuating matrix.", flush=True)
+            sys.exit(0)
+
+        async with async_playwright() as p:
+            print(f"🌐 [Engine {engine_id}] Launching stealth browser...", flush=True)
+            browser = await p.chromium.launch_persistent_context(
+                user_data_dir, headless=True,
+                args=["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"]
+            )
+            await browser.add_cookies([{"name": "sessionid", "value": sid, "domain": ".instagram.com", "path": "/", "secure": True, "httpOnly": True}])
+            page = await browser.new_page()
+            await page.route("**/*", block_media)
+            
+            try:
+                print(f"🔗 [Engine {engine_id}] Connecting to target URL...", flush=True)
+                await page.goto(url, wait_until='domcontentloaded', timeout=60000)
+                msg_box = page.locator('div[role="textbox"], div[aria-label="Message"]').first
+                print(f"✅ [Engine {engine_id}] TARGET SECURED. Initializing payload loop.", flush=True)
+                
+                msg_count = 0
+                while msg_count < 150: 
+                    if msg_count > 0 and msg_count % 30 == 0:
+                        print(f"🔄 [Engine {engine_id}] RELOADING PAGE...", flush=True)
+                        await page.reload(wait_until='domcontentloaded')
+                        msg_box = page.locator('div[role="textbox"], div[aria-label="Message"]').first
                     
-                    # Rest between human sessions
-                    post_cooldown_rest = random.randint(60, 120)
-                    print(f"💤 [ID {thread_idx}] Cooldown session done. Rest for {post_cooldown_rest}s...")
-                    await asyncio.sleep(post_cooldown_rest)
+                    if random.random() < SIGNATURE_CHANCE:
+                        text_to_send = SIGNATURE
+                        msg_type = "SIGNATURE"
+                        icon = "☠️"
+                    else:
+                        text_to_send = get_payload()
+                        msg_type = "PAYLOAD"
+                        icon = "🚀"
 
+                    await msg_box.focus()
+                    await msg_box.fill(text_to_send) 
+                    await page.keyboard.press("Enter")
+                    
+                    msg_count += 1
+                    print(f"{icon} [Engine {engine_id}] MESSAGE SENT [{msg_type}] | Strike {msg_count}/150", flush=True)
+                    await asyncio.sleep(0.3)
+                    
             except Exception as e:
-                print(f"⚠️ [ID {thread_idx} | M {machine_id}] Session Warning: {e}. Re-syncing in 15s...")
-                await asyncio.sleep(15)
-
-        await context.close()
+                print(f"⚠️ [Engine {engine_id}] CONNECTION LOST: {e}", flush=True)
+            
+            print(f"🧹 [Engine {engine_id}] Closing browser and wiping session data...", flush=True)
+            await browser.close()
+            if os.path.exists(user_data_dir):
+                shutil.rmtree(user_data_dir, ignore_errors=True)
 
 async def main():
-    cookie1 = os.environ.get("INSTA_COOKIE_1")
-    cookie2 = os.environ.get("INSTA_COOKIE_2")
-    target_id = os.environ.get("TARGET_THREAD_ID")
-    target_name = os.environ.get("TARGET_NAME", "TARGET")
-    m_id = os.environ.get("MACHINE_ID", "1")
+    sid = os.environ.get("SESSION_ID")
+    url = os.environ.get("GROUP_URL")
     
-    display = Display(visible=0, size=(1024, 768))
-    display.start()
+    print("🔥 INITIALIZING PHOENIX MATRIX SYSTEM 🔥", flush=True)
     
-    try:
-        if cookie1 and cookie2 and target_id:
-            await asyncio.gather(
-                run_strike(1, cookie1, target_id, target_name, m_id),   # ID 1
-                run_strike(2, cookie2, target_id, target_name, m_id)    # ID 2
-            )
-    finally:
-        display.stop()
+    tid = url.strip('/').split('/')[-1] if url else ""
+    tasks = [run_engine(i+1, sid, url) for i in range(2)]
+    
+    if tid:
+        tasks.append(run_name_guardian(sid, tid, SIGNATURE))
+    else:
+        print("⚠️ [SYSTEM] Could not parse Thread ID. Guardian offline.", flush=True)
+        
+    await asyncio.gather(*tasks)
 
 if __name__ == "__main__":
     asyncio.run(main())
-            
