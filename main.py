@@ -47,7 +47,7 @@ async def run_strike(node_id, cookie, target_id, target_name):
                 const getBlock = () => {
                     const emojis = ["⋆ִֶָ˖·˳˖𓂃ִֶָ〘💥〙", "⋆ִֶָ˖·˳˖𓂃ִֶָ〘🌪️〙", "⋆ִֶָ˖·˳˖𓂃ִֶָ〘🍂〙", "⋆ִֶָ˖·˳˖𓂃ִֶָ〘🌷〙", "⋆ִֶָ˖·˳˖𓂃ִֶָ〘🌀〙", "⋆ִֶָ˖·˳˖𓂃ִֶָ〘💎〙", "⋆ִֶָ˖·˳˖𓂃ִֶָ〘💤〙", "⋆ִֶָ˖·˳˖𓂃ִֶָ〘🔥〙", "⋆ִֶָ˖·˳˖𓂃ִֶָ〘💠〙", "⋆ִֶָ˖·˳˖𓂃ִֶָ〘🌿〙"];
                     const currentEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-                    const line = "ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ 𝚃𝙼𝙺𝙲 " + currentEmoji + "་༘࿐";
+                    const line = "ᴋᴀʀᴛɪᴋ-ᴠᴇᴇʀᴜ-ʀᴀᴋꜱʜɪᴛ-ʟᴜᴠ-ᴊᴀʏ कमजोर रण्डी  " + currentEmoji";
                     
                     let text = "";
                     for(let i = 0; i < 11; i++) { 
