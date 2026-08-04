@@ -50,7 +50,7 @@ async def run_strike(node_id, cookie, target_id, target_name):
                     const line = "ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ 𝚃𝙼𝙺𝙲 " + currentEmoji + "་༘࿐";
                     
                     let text = "";
-                    for(let i = 0; i < 10; i++) { 
+                    for(let i = 0; i < 11; i++) { 
                         text += line + "\\n\\n\\n\\n"; 
                     }
                     return text;
